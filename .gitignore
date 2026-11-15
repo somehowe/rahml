@@ -1,0 +1,4 @@
+/extra/
+/build/
+/gcm.cache/
+*.o
