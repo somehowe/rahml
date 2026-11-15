@@ -9,7 +9,7 @@ build:
 	mkdir -p build
 
 build/headers.stamp: Makefile | build
-	$(CXX) $(CXXFLAGS) -x c++-system-header -c iostream
+	$(CXX) $(CXXFLAGS) -x c++-system-header -c iostream memory
 	touch build/headers.stamp
 
 build/rahml.o: src/rahml.cc build/headers.stamp
