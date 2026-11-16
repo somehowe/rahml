@@ -59,7 +59,7 @@ export namespace rahml {
             return node->grad;
         }
         
-        Value operator+(Value &other) {
+        Value operator+(const Value &other) const {
             return Value{std::make_shared<AddNode>(node, other.node)};
         }
     };

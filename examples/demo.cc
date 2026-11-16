@@ -1,6 +1,5 @@
 import rahml;
 import <iostream>;
-import <cassert>;
 
 int main() {
     rahml::Value x{2.0};
