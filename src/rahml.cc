@@ -24,6 +24,20 @@ struct LeafNode final : Node {
                                      // to send gradients too
 };
 
+struct AddNode final : Node {
+    AddNode(std::shared_ptr<Node> lnode, 
+        std::shared_ptr<Node> rnode) : 
+        Node{lnode->data + rnode->data, {lnode, rnode}} {}
+    void backward_step() override {
+        // Ex. z = x + y (in this example our node is currently z)
+        // ∂z/∂x = 1 (because y here would just be some constant)
+        // now if a = 10 * z then ∂a/∂x = ∂a/∂z * ∂z/∂x
+        // so we pass down what our current grad is too our kids
+        inputs[0]->grad += grad;
+        inputs[1]->grad += grad;
+    }
+};
+
 export namespace rahml {
 
     class Value {
@@ -34,7 +48,7 @@ export namespace rahml {
         z points at x and y and so does f, thus we must use shared ptrs so
         that they don't get double deleted
         */
-
+        Value(std::shared_ptr<Node> &&node) : node{std::move(node)} {}
     public:
         explicit Value(double data)
             : node{std::make_shared<LeafNode>(data)} {}
@@ -43,6 +57,10 @@ export namespace rahml {
         }
         double grad() const {
             return node->grad;
+        }
+        
+        Value operator+(Value &other) {
+            return Value{std::make_shared<AddNode>(node, other.node)};
         }
     };
 
