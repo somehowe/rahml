@@ -1,6 +1,8 @@
 export module rahml;
 
 import <memory>; // for shared ptrs
+import <vector>;
+import <utility>;
 
 export namespace rahml {
 
@@ -9,8 +11,12 @@ export namespace rahml {
         struct Node { // abstract base class
             double data;
             double grad = 0.0;
+            std::vector<std::shared_ptr<Node>> inputs; // the nodes that came
+            // together to form it. Ex. y = x + z, y points at x and z
 
-            explicit Node(double data) : data{data} {}
+            explicit Node(double data, 
+                std::vector<std::shared_ptr<Node>> inputs = {}) : 
+                data{data}, inputs{std::move(inputs)} {}
             virtual ~Node() = default;
             virtual void backward_step() = 0; // recursive chain rule
         };
