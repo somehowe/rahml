@@ -18,3 +18,5 @@ jobs:
         run: g++ --version
       - name: Run demo
         run: make run -j2 CXX=g++
+      - name: Run tests
+        run: make test -j2 CXX=g++
