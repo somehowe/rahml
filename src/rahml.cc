@@ -13,6 +13,10 @@ struct Node { // abstract base class
     std::vector<std::shared_ptr<Node>> inputs; // the nodes that came
     // together to form it. Ex. y = x + z, y points at x and z
 
+    // TODO: almost unnecessary right now like doing the inputs
+    //       I should be maybe taking by reference well because we are usually
+    //       passing r value so I guess it will be constructed right in 
+    //       there so usually we are maybe fine but yeah
     explicit Node(double data, 
         std::vector<std::shared_ptr<Node>> inputs = {}) : 
         data{data}, inputs{std::move(inputs)} {}
@@ -37,6 +41,20 @@ struct AddNode final : Node {
         // so we pass down what our current grad is too our kids
         inputs[0]->grad += grad;
         inputs[1]->grad += grad;
+    }
+};
+
+struct MultNode final : Node {
+    MultNode(std::shared_ptr<Node> lnode,
+        std::shared_ptr<Node> rnode) :
+        Node{lnode->data * rnode->data, {lnode, rnode}} {}
+    void backward_step() override {
+        // Ex. z = x * y (current node is z)
+        // assume y stays constant dz/dx = y (product rule)
+        // if a = 10 * z then to find how x affects a we need to use chain rule
+        // and distribute to kids: ∂a/∂x = ∂a/∂z * ∂z/∂x = grad * y->data
+        inputs[0]->grad += grad * inputs[1]->data;
+        inputs[1]->grad += grad * inputs[0]->data;
     }
 };
 
