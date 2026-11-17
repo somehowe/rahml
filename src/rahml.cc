@@ -13,10 +13,7 @@ struct Node { // abstract base class
     std::vector<std::shared_ptr<Node>> inputs; // the nodes that came
     // together to form it. Ex. y = x + z, y points at x and z
 
-    // TODO: almost unnecessary right now like doing the inputs
-    //       I should be maybe taking by reference well because we are usually
-    //       passing r value so I guess it will be constructed right in 
-    //       there so usually we are maybe fine but yeah
+    // we need to own input list, so copy input
     explicit Node(double data, 
         std::vector<std::shared_ptr<Node>> inputs = {}) : 
         data{data}, inputs{std::move(inputs)} {}
@@ -118,6 +115,10 @@ export namespace rahml {
         
         Value operator+(const Value &other) const {
             return Value{std::make_shared<AddNode>(node, other.node)};
+        }
+        Value operator*(const Value &other) const {
+            // this will get copy elided away
+            return Value{std::make_shared<MultNode>(node, other.node)};
         }
     };
 
