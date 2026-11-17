@@ -37,7 +37,7 @@ int main() {
     Value loss = (branch + source) + branch;
     loss.backward();
     assert(source.grad() == 5.0);
-    // repeat the call again
+    // repeat the call again (reset to 0's and go through the whole thing again)
     loss.backward();
     assert(source.grad() == 5.0);
 }

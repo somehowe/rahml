@@ -3,6 +3,7 @@ export module rahml;
 import <memory>; // for shared ptrs
 import <vector>;
 import <utility>;
+import <unordered_set>;
 
 
 struct Node { // abstract base class
@@ -37,6 +38,25 @@ struct AddNode final : Node {
         inputs[1]->grad += grad;
     }
 };
+
+// append each node after its inputs. By construction, when we reverse this, it
+//   lets each node receive its full gradient before passing it on to inputs.
+void collect_nodes(
+    const std::shared_ptr<Node> &current,
+    std::unordered_set<Node *> &seen,
+    std::vector<std::shared_ptr<Node>> &ordered
+) {
+    if (seen.contains(current.get())) {
+        // already visited it in another path
+        return;
+    }
+    seen.insert(curren.get()); // so we don't add it multiple times
+    for (const auto& input : current->inputs) {
+        // do the dependencies first
+        collect_nodes(input, seen, ordered);
+    }
+    ordered.push_back(current);
+}
 
 export namespace rahml {
 
