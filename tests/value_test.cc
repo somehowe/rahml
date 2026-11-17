@@ -100,4 +100,45 @@ int main() {
         assert(x.grad() == 16.0); // res = y * x + y = x^3 + x^2 = 3x^2 + 2x
     }
 
+    // now we test negation and subtraction
+    // negating reverse the gradient
+    {
+        const Value x{3.0};
+        Value result = -x;
+        assert(result.data() == -3.0);
+        result.backward();
+        assert(x.grad() == -1.0);
+    }
+    // Subtraction will give negative sign for derivative
+    {
+        Value x{5.0};
+        const Value y{2.0};
+        Value result = x - y;
+        assert(result.data() == 3.0);
+        result.backward();
+        assert(x.grad() == 1.0);
+        assert(y.grad() == -1.0);
+    }
+    // Contributions cancel when both are same node (1 - 1 = 0)
+    {
+        Value x{4.0};
+        Value result = x - x;
+        assert(result.data() == 0.0);
+        result.backward();
+        assert(x.grad() == 0.0);
+    }
+    // Case where negation and subtraction combined
+    {
+        Value x{3.0};
+        Value y{1.0};
+        // -3 * (3 - 1) = -3 * 2 = -6
+        // -x^2 + xy
+        // ∂r/∂x = -2x + y = -6 + 1 = -5
+        // ∂r/∂y = x = 3.0
+        Value result = (-x) * (x - y);
+        assert(result.data() == -6.0);
+        result.backward();
+        assert(x.grad() == -5.0);
+        assert(y.grad() == 3.0);
+    }
 }
