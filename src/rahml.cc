@@ -84,7 +84,7 @@ export namespace rahml {
         z points at x and y and so does f, thus we must use shared ptrs so
         that they don't get double deleted
         */
-        Value(std::shared_ptr<Node> &&node) : node{std::move(node)} {}
+        Value(std::shared_ptr<Node> node) : node{std::move(node)} {}
     public:
         explicit Value(double data)
             : node{std::make_shared<LeafNode>(data)} {}
