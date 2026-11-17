@@ -4,6 +4,7 @@ import <memory>; // for shared ptrs
 import <vector>;
 import <utility>;
 import <unordered_set>;
+import <algorithm>;
 
 
 struct Node { // abstract base class
@@ -50,7 +51,7 @@ void collect_nodes(
         // already visited it in another path
         return;
     }
-    seen.insert(curren.get()); // so we don't add it multiple times
+    seen.insert(current.get()); // so we don't add it multiple times
     for (const auto& input : current->inputs) {
         // do the dependencies first
         collect_nodes(input, seen, ordered);
@@ -77,6 +78,24 @@ export namespace rahml {
         }
         double grad() const {
             return node->grad;
+        }
+        // backpropogation:
+        void backward() {
+            std::unordered_set<Node *> seen;
+            std::vector<std::shared_ptr<Node>> ordered;
+            // find reachable nodes and make order
+            collect_nodes(node, seen, ordered); // dependency order for the
+                                                // operations that make them up
+            // reset to 0, we want to start fresh
+            for (const auto &curr : ordered) curr->grad = 0.0;
+
+            std::reverse(ordered.begin(), ordered.end());
+            node->grad = 1.0; // seed b/c derivative of itself is always 1
+            // propogate
+            for (const auto &curr : ordered) {
+                // correctly give grads to children
+                curr->backward_step();
+            }
         }
         
         Value operator+(const Value &other) const {
