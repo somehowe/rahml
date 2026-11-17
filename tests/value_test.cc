@@ -40,4 +40,64 @@ int main() {
     // repeat the call again (reset to 0's and go through the whole thing again)
     loss.backward();
     assert(source.grad() == 5.0);
+
+    // let's test mult now
+    {
+        Value x{4.0};
+        Value y{-2.0};
+        Value prod = x * y;
+        assert(prod.data() == -8.0);
+        assert(prod.grad() == 0.0);
+        prod.backward();
+        assert(prod.grad() == 1.0);
+        assert(x.grad() == -2.0);
+        assert(y.grad() == 4.0);
+    }
+    // repeated input, make sure we are adding to the gradients
+    {
+        Value x{3.0};
+        Value sqr = x * x;
+        assert(sqr.data() == 9.0);
+        sqr.backward();
+        assert(x.grad() == 6.0); // derivative of x^2 = 2x = 2 * 3
+    }
+    // zero case
+    {
+        Value x{0.0};
+        Value y{-2.0};
+        Value prod = x * y;
+        assert(prod.data() == 0.0);
+        assert(prod.grad() == 0.0);
+        prod.backward();
+        assert(prod.grad() == 1.0);
+        assert(x.grad() == -2.0);
+        assert(y.grad() == 0.0);
+    }
+    // Nov. 20 goal that we had
+    {
+        Value x{2.0};
+        Value y{3.0};
+        Value result = (x + y) * y;
+        assert(result.data() == 15.0); // 2 + 3 = 5 * 3 = 15
+        result.backward();
+        // y*x + y^2
+        assert(x.grad() == 3.0); // dr/dx = y
+        assert(y.grad() == 8.0); // dr/dy = x + 2y = 2 + 6 = 8
+        // repeat to make sure grads replaced
+        result.backward();
+        assert(x.grad() == 3.0);
+        assert(y.grad() == 8.0);
+    }
+    // make sure collection still working and that we basically
+    //   calculate gradients at shared node before passing to inputs 
+    {
+        Value x{2.0};
+        Value y = x * x;
+        Value result = y * x + y;
+        assert(result.data() == 12.0);
+        result.backward();
+        assert(y.grad() == 3.0); // dr/dy = x + 1
+        assert(x.grad() == 16.0); // res = y * x + y = x^3 + x^2 = 3x^2 + 2x
+    }
+
 }
