@@ -168,10 +168,6 @@ export namespace rahml {
         Value operator+(double number) const {
             return *this + Value{number};
         }
-        Value operator*(const Value &other) const {
-            // this will get copy elided away
-            return Value{std::make_shared<MultNode>(node, other.node)};
-        }
         Value operator-() const {
             return Value{std::make_shared<NegNode>(node)};
         }
@@ -179,8 +175,21 @@ export namespace rahml {
             // subtracting is the same as adding a negative number
             return *this + (-other); // redirection to using our + and -
         }
+        Value operator-(double number) const {
+            return *this - Value{number};
+        }
+        Value operator*(const Value &other) const {
+            // this will get copy elided away
+            return Value{std::make_shared<MultNode>(node, other.node)};
+        }
+        Value operator*(double number) const {
+            return *this * Value{number};
+        }
         Value operator/(const Value &other) const {
             return Value{std::make_shared<DivNode>(node, other.node)};
+        }
+        Value operator/(double number) const {
+            return *this / Value{number};
         }
         Value tanh() const {
             return Value{std::make_shared<TanhNode>(node)};
@@ -191,6 +200,18 @@ export namespace rahml {
     };
     Value operator+(double number, const Value &value) {
         return value + number; // swap order so it calls function in Value class
+    }
+    Value operator-(double number, const Value &value) {
+        // here the order does matter, we can't just redirect
+        return Value{number} - value;
+    }
+
+    Value operator*(double number, const Value &value) {
+        return value * number;
+    }
+
+    Value operator/(double number, const Value &value) {
+        return Value{number} / value;
     }
 }
 

@@ -271,6 +271,8 @@ int main() {
         assert(y.grad() == 2.0);
         assert(x.grad() == 3.0);
     }
+    // get all the operators to work with numeric numbers
+
     // addition with a regular number works on either side
     {
         const Value x{3.0};
@@ -284,5 +286,40 @@ int main() {
         assert(left.data() == 5.0);
         left.backward();
         assert(x.grad() == 1.0);
+    }
+
+    // subtraction
+    {
+        const Value x{3.0};
+
+        Value right = x - 2.0;
+        assert(right.data() == 1.0);
+        right.backward();
+        assert(x.grad() == 1.0);
+
+        Value left = 2.0 - x;
+        assert(left.data() == -1.0);
+        left.backward();
+        assert(x.grad() == -1.0);
+    }
+
+    // multiplication
+    {
+        const Value x{3.0};
+        Value result = 2.0 * x + x * 2.0;
+
+        assert(result.data() == 12.0);
+        result.backward();
+        assert(x.grad() == 4.0);
+    }
+
+    // division
+    {
+        const Value x{4.0};
+        Value result = x / 2.0 + 2.0 / x;
+
+        assert(result.data() == 2.5);
+        result.backward();
+        assert(x.grad() == 0.375);
     }
 }
