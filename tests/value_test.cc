@@ -1,5 +1,6 @@
 import rahml;
 import <cassert>;
+import <iostream>;
 
 using rahml::Value;
 
@@ -150,5 +151,40 @@ int main() {
         result.backward();
         assert(x.grad() == 0.5);
         assert(y.grad() == -2.0);
+    }
+    // fraction case
+    {
+        Value x{1.5};
+        Value y{0.5};
+        Value result = x / y;
+
+        assert(result.data() == 3.0);
+        result.backward();
+        assert(x.grad() == 2.0);
+        assert(y.grad() == -6.0);
+    }
+
+    // dividing by self
+    {
+        Value x{4.0};
+        Value result = x / x;
+
+        assert(result.data() == 1.0);
+        result.backward();
+        assert(x.grad() == 0.0);
+    }
+
+    // make sure it adds both contributions when multiplying (accumulation)
+    {
+        Value x{8.0};
+        Value y{2.0};
+        Value r = x / y;
+        Value result = r * r;
+
+        assert(result.data() == 16.0);
+        result.backward();
+        assert(r.grad() == 8.0);
+        assert(x.grad() == 4.0);
+        assert(y.grad() == -16.0);
     }
 }
