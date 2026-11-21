@@ -1,4 +1,4 @@
-CXX := g++-15
+CXX := g++-15.2.0
 CXXFLAGS := -std=c++20 -fmodules-ts -Wall -Wextra -Wpedantic -g
 
 .PHONY: all run clean test regression
