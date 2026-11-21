@@ -271,4 +271,18 @@ int main() {
         assert(y.grad() == 2.0);
         assert(x.grad() == 3.0);
     }
+    // addition with a regular number works on either side
+    {
+        const Value x{3.0};
+
+        Value right = x + 2.0;
+        assert(right.data() == 5.0);
+        right.backward();
+        assert(x.grad() == 1.0);
+
+        Value left = 2.0 + x;
+        assert(left.data() == 5.0);
+        left.backward();
+        assert(x.grad() == 1.0);
+    }
 }

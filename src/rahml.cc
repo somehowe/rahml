@@ -165,6 +165,9 @@ export namespace rahml {
         Value operator+(const Value &other) const {
             return Value{std::make_shared<AddNode>(node, other.node)};
         }
+        Value operator+(double number) const {
+            return *this + Value{number};
+        }
         Value operator*(const Value &other) const {
             // this will get copy elided away
             return Value{std::make_shared<MultNode>(node, other.node)};
@@ -186,7 +189,8 @@ export namespace rahml {
             return Value{std::make_shared<ReLUNode>(node)};
         }
     };
-
-
+    Value operator+(double number, const Value &value) {
+        return value + number; // swap order so it calls function in Value class
+    }
 }
 
