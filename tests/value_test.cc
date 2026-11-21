@@ -1,6 +1,7 @@
 import rahml;
 import <cassert>;
 import <iostream>;
+import <cmath>;
 
 using rahml::Value;
 
@@ -186,5 +187,47 @@ int main() {
         assert(r.grad() == 8.0);
         assert(x.grad() == 4.0);
         assert(y.grad() == -16.0);
+    }
+    // now we test tanh:
+    constexpr double tolerance = 1e-3;
+
+    // At zero, tanh outputs zero and has derivative one.
+    {
+        Value x{0.0};
+        Value y = x.tanh();
+
+        assert(std::abs(y.data()) < tolerance);
+        y.backward();
+        assert(std::abs(x.grad() - 1.0) < tolerance);
+    }
+
+    // check a negative input.
+    {
+        Value x{-1.0};
+        Value y = x.tanh();
+
+        assert(std::abs(y.data() + 0.7616) < tolerance);
+        y.backward();
+        assert(std::abs(x.grad() - 0.4200) < tolerance);
+    }
+
+    // accumulate contributions through y and directly through x.
+    {
+        const Value x{1.0};
+        Value y = x.tanh();
+
+        assert(std::abs(y.data() - 0.7616) < tolerance);
+        y.backward();
+        assert(std::abs(x.grad() - 0.4200) < tolerance);
+
+        Value result = y + y + x;
+        result.backward();
+
+        assert(y.grad() == 2.0);
+        assert(std::abs(x.grad() - 1.8399) < tolerance);
+
+        // repeating replaces the previous gradients
+        result.backward();
+        assert(std::abs(x.grad() - 1.8399) < tolerance);
     }
 }

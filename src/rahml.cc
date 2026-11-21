@@ -5,6 +5,7 @@ import <vector>;
 import <utility>;
 import <unordered_set>;
 import <algorithm>;
+import <cmath>;
 
 
 struct Node { // abstract base class
@@ -78,6 +79,16 @@ struct DivNode final : Node {
         inputs[0]->grad += grad * (1.0 / y_data);
         // ∂z/∂y = x * -1/y^2
         inputs[1]->grad += grad * (-x_data / (y_data * y_data));
+    }
+};
+
+struct TanhNode final : Node {
+    explicit TanhNode(std::shared_ptr<Node> node) : 
+        Node{std::tanh(node->data), {node}} {}
+    void backward_step() override {
+        // the derivative of tanh is 1 - tanh^2(x)
+        // so using the chain rule:
+        inputs[0]->grad += grad * (1.0 - data * data);
     }
 };
 
@@ -155,6 +166,9 @@ export namespace rahml {
         }
         Value operator/(const Value &other) const {
             return Value{std::make_shared<DivNode>(node, other.node)};
+        }
+        Value tanh() const {
+            return Value{std::make_shared<TanhNode>(node)};
         }
     };
 
