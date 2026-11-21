@@ -230,4 +230,45 @@ int main() {
         result.backward();
         assert(std::abs(x.grad() - 1.8399) < tolerance);
     }
+    // now test relu:
+
+    // negative ReLU contributes nothing
+    {
+        Value x{-2.0};
+        Value y = x.relu();
+
+        assert(y.data() == 0.0);
+        y.backward();
+        assert(x.grad() == 0.0);
+
+        Value result = y + x;
+        result.backward();
+        assert(x.grad() == 1.0);
+    }
+
+    // we will choose our derivative at zero to be zero
+    {
+        Value x{0.0};
+        Value y = x.relu();
+
+        assert(y.data() == 0.0);
+        y.backward();
+        assert(x.grad() == 0.0);
+    }
+
+    // Positive inputs case
+    {
+        const Value x{3.0};
+        Value y = x.relu();
+
+        assert(y.data() == 3.0);
+        y.backward();
+        assert(x.grad() == 1.0);
+
+        Value result = y + y + x;
+        result.backward();
+
+        assert(y.grad() == 2.0);
+        assert(x.grad() == 3.0);
+    }
 }

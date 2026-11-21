@@ -92,6 +92,18 @@ struct TanhNode final : Node {
     }
 };
 
+struct ReLUNode final : Node {
+    explicit ReLUNode(std::shared_ptr<Node> node) :
+        Node(std::max(0.0, node->data), {node}) {}
+    void backward_step() override {
+        // when <= 0 this function is just y = 0 which has 0 slope
+        // so we don't add gradient to this. when > 0 y = x so slope of 1
+        if (data > 0.0) {
+            inputs[0]->grad += grad;
+        }
+    }
+};
+
 // append each node after its inputs. By construction, when we reverse this, it
 //   lets each node receive its full gradient before passing it on to inputs.
 void collect_nodes(
@@ -170,6 +182,11 @@ export namespace rahml {
         Value tanh() const {
             return Value{std::make_shared<TanhNode>(node)};
         }
+        Value relu() const {
+            return Value{std::make_shared<ReLUNode>(node)};
+        }
     };
 
+
 }
+
