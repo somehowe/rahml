@@ -36,8 +36,18 @@ struct AddNode final : Node {
         // ∂z/∂x = 1 (because y here would just be some constant)
         // now if a = 10 * z then ∂a/∂x = ∂a/∂z * ∂z/∂x
         // so we pass down what our current grad is too our kids
-        inputs[0]->grad += grad;
-        inputs[1]->grad += grad;
+        inputs[0]->grad += grad * 1;
+        inputs[1]->grad += grad * 1;
+    }
+};
+
+struct NegNode final : Node {
+    NegNode(std::shared_ptr<Node> node) : Node{-node->data, {node}} {}
+    void backward_step() override {
+        // Ex. z = -x (in this example our node is currently z)
+        // ∂z/∂x = -1, now if a = 10 * z then ∂a/∂x = ∂a/∂z * ∂z/∂x
+        // thus we pass down what our grad is to our kids
+        inputs[0]->grad += grad * -1; // += -1 * grad
     }
 };
 
@@ -52,6 +62,22 @@ struct MultNode final : Node {
         // and distribute to kids: ∂a/∂x = ∂a/∂z * ∂z/∂x = grad * y->data
         inputs[0]->grad += grad * inputs[1]->data;
         inputs[1]->grad += grad * inputs[0]->data;
+    }
+};
+
+struct DivNode final : Node {
+    DivNode(std::shared_ptr<Node> lnode, 
+        std::shared_ptr<Node> rnode) :
+        Node{lnode->data / rnode->data, {lnode, rnode}} {}
+    void backward_step() override {
+        double x_data = inputs[0]->data;
+        double y_data = inputs[1]->data;
+        // z = x / y (current node is z). ∂z/∂x = 1/y
+        // ex. a = 10 * z so we are finding da/dx so using chain rule multiply
+        // by grad
+        inputs[0]->grad += grad * (1.0 / y_data);
+        // ∂z/∂y = x * -1/y^2
+        inputs[1]->grad += grad * (-x_data / (y_data * y_data));
     }
 };
 
@@ -84,7 +110,7 @@ export namespace rahml {
         z points at x and y and so does f, thus we must use shared ptrs so
         that they don't get double deleted
         */
-        Value(std::shared_ptr<Node> &&node) : node{std::move(node)} {}
+        Value(std::shared_ptr<Node> node) : node{std::move(node)} {}
     public:
         explicit Value(double data)
             : node{std::make_shared<LeafNode>(data)} {}
@@ -119,6 +145,16 @@ export namespace rahml {
         Value operator*(const Value &other) const {
             // this will get copy elided away
             return Value{std::make_shared<MultNode>(node, other.node)};
+        }
+        Value operator-() const {
+            return Value{std::make_shared<NegNode>(node)};
+        }
+        Value operator-(const Value &other) const {
+            // subtracting is the same as adding a negative number
+            return *this + (-other); // redirection to using our + and -
+        }
+        Value operator/(const Value &other) const {
+            return Value{std::make_shared<DivNode>(node, other.node)};
         }
     };
 

@@ -1,7 +1,7 @@
 CXX := g++-15
 CXXFLAGS := -std=c++20 -fmodules-ts -Wall -Wextra -Wpedantic -g
 
-.PHONY: all run clean test
+.PHONY: all run clean test regression
 
 all: build/demo
 
@@ -21,6 +21,13 @@ build/demo: examples/demo.cc build/rahml.o
 
 build/test: build/rahml.o tests/value_test.cc
 	$(CXX) $(CXXFLAGS) tests/value_test.cc build/rahml.o -o build/test
+
+build/linear_regression: examples/linear_regression.cc build/rahml.o
+	$(CXX) $(CXXFLAGS) examples/linear_regression.cc build/rahml.o -o \
+		build/linear_regression
+
+regression: build/linear_regression
+	./build/linear_regression
 
 run: build/demo
 	./build/demo 2 3
