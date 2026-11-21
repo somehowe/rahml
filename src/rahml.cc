@@ -41,6 +41,15 @@ struct AddNode final : Node {
     }
 };
 
+struct NegNode final : Node {
+    NegNode(std::shared_ptr<Node> node) : Node{-node->data, {node}} {}
+    void backward_step() override {
+        // Ex. z = -x (in this example our node is currently z)
+        // ∂z/∂x = -1
+        inputs[0]->grad -= grad;
+    }
+};
+
 struct MultNode final : Node {
     MultNode(std::shared_ptr<Node> lnode,
         std::shared_ptr<Node> rnode) :
@@ -119,6 +128,13 @@ export namespace rahml {
         Value operator*(const Value &other) const {
             // this will get copy elided away
             return Value{std::make_shared<MultNode>(node, other.node)};
+        }
+        Value operator-() const {
+            return Value{std::make_shared<NegNode>(node)};
+        }
+        Value operator-(const Value &other) const {
+            // subtracting is the same as adding a negative number
+            return *this + (-other); // redirection to using our + and -
         }
     };
 
