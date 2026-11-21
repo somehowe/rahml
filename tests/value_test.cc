@@ -141,4 +141,14 @@ int main() {
         assert(x.grad() == -5.0);
         assert(y.grad() == 3.0);
     }
+    // test division
+    {
+        Value x{8.0};
+        Value y{2.0};
+        Value result = x / y;
+        assert(result.data() == 4.0);
+        result.backward();
+        assert(x.grad() == 0.5);
+        assert(y.grad() == -2.0);
+    }
 }
