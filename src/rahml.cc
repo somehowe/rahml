@@ -133,6 +133,12 @@ void collect_nodes(
 
 export namespace rahml {
 
+    template <typename Function>
+    double central_difference(const Function &f, double x) {
+        constexpr double h = 1e-5;
+        return (f(x + h) - f(x - h)) / (2.0 * h);
+    }
+
     class Value {
         std::shared_ptr<Node> node; // multiple could point, Ex:
         /*

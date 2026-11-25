@@ -350,4 +350,17 @@ int main() {
             assert(square.data() == 4.0);
         }
     }
+
+    // testing the numeric derivative
+    {
+        auto f = [](auto x) { return x * x + x; };
+
+        Value x{2.0};
+        f(x).backward();
+
+        double estimate = rahml::central_difference(f, 2.0);
+        assert(std::abs(estimate - 5.0) < 1e-6);
+        // make sure it aligns with x.grad:
+        assert(std::abs(x.grad() - estimate) < 1e-6);
+    }
 }
