@@ -1,6 +1,8 @@
 CXX := g++-15.2.0
 CXXFLAGS := -std=c++20 -fmodules-ts -Wall -Wextra -Wpedantic -g
 
+RAHML_OBJS := build/rahml.o build/autograd.o
+
 .PHONY: all run clean test regression
 
 all: build/demo
@@ -16,15 +18,17 @@ build/headers.stamp: Makefile | build
 build/rahml.o: src/rahml.cc build/headers.stamp
 	$(CXX) $(CXXFLAGS) -c src/rahml.cc -o build/rahml.o
 
-build/demo: examples/demo.cc build/rahml.o
-	$(CXX) $(CXXFLAGS) examples/demo.cc build/rahml.o -o build/demo
+build/autograd.o: src/autograd.cc build/rahml.o
+	$(CXX) $(CXXFLAGS) -c src/autograd.cc -o build/autograd.o
 
-build/test: build/rahml.o tests/value_test.cc
-	$(CXX) $(CXXFLAGS) tests/value_test.cc build/rahml.o -o build/test
+build/demo: examples/demo.cc $(RAHML_OBJS)
+	$(CXX) $(CXXFLAGS) $^ -o $@
 
-build/linear_regression: examples/linear_regression.cc build/rahml.o
-	$(CXX) $(CXXFLAGS) examples/linear_regression.cc build/rahml.o -o \
-		build/linear_regression
+build/test: tests/value_test.cc $(RAHML_OBJS)
+	$(CXX) $(CXXFLAGS) $^ -o $@
+
+build/linear_regression: examples/linear_regression.cc $(RAHML_OBJS)
+	$(CXX) $(CXXFLAGS) $^ -o $@
 
 regression: build/linear_regression
 	./build/linear_regression
