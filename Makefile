@@ -1,4 +1,4 @@
-CXX := g++-15
+CXX := g++-15.2.0
 CXXFLAGS := -std=c++20 -fmodules-ts -Wall -Wextra -Wpedantic -g
 
 .PHONY: all run clean test regression
@@ -10,7 +10,7 @@ build:
 
 build/headers.stamp: Makefile | build
 	$(CXX) $(CXXFLAGS) -x c++-system-header -c iostream memory vector \
-		utility cassert unordered_set algorithm string
+		utility cassert unordered_set algorithm string cmath
 	touch build/headers.stamp
 
 build/rahml.o: src/rahml.cc build/headers.stamp

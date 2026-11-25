@@ -1,6 +1,7 @@
 import rahml;
 import <cassert>;
 import <iostream>;
+import <cmath>;
 
 using rahml::Value;
 
@@ -186,5 +187,139 @@ int main() {
         assert(r.grad() == 8.0);
         assert(x.grad() == 4.0);
         assert(y.grad() == -16.0);
+    }
+    // now we test tanh:
+    constexpr double tolerance = 1e-3;
+
+    // At zero, tanh outputs zero and has derivative one.
+    {
+        Value x{0.0};
+        Value y = x.tanh();
+
+        assert(std::abs(y.data()) < tolerance);
+        y.backward();
+        assert(std::abs(x.grad() - 1.0) < tolerance);
+    }
+
+    // check a negative input.
+    {
+        Value x{-1.0};
+        Value y = x.tanh();
+
+        assert(std::abs(y.data() + 0.7616) < tolerance);
+        y.backward();
+        assert(std::abs(x.grad() - 0.4200) < tolerance);
+    }
+
+    // accumulate contributions through y and directly through x.
+    {
+        const Value x{1.0};
+        Value y = x.tanh();
+
+        assert(std::abs(y.data() - 0.7616) < tolerance);
+        y.backward();
+        assert(std::abs(x.grad() - 0.4200) < tolerance);
+
+        Value result = y + y + x;
+        result.backward();
+
+        assert(y.grad() == 2.0);
+        assert(std::abs(x.grad() - 1.8399) < tolerance);
+
+        // repeating replaces the previous gradients
+        result.backward();
+        assert(std::abs(x.grad() - 1.8399) < tolerance);
+    }
+    // now test relu:
+
+    // negative ReLU contributes nothing
+    {
+        Value x{-2.0};
+        Value y = x.relu();
+
+        assert(y.data() == 0.0);
+        y.backward();
+        assert(x.grad() == 0.0);
+
+        Value result = y + x;
+        result.backward();
+        assert(x.grad() == 1.0);
+    }
+
+    // we will choose our derivative at zero to be zero
+    {
+        Value x{0.0};
+        Value y = x.relu();
+
+        assert(y.data() == 0.0);
+        y.backward();
+        assert(x.grad() == 0.0);
+    }
+
+    // Positive inputs case
+    {
+        const Value x{3.0};
+        Value y = x.relu();
+
+        assert(y.data() == 3.0);
+        y.backward();
+        assert(x.grad() == 1.0);
+
+        Value result = y + y + x;
+        result.backward();
+
+        assert(y.grad() == 2.0);
+        assert(x.grad() == 3.0);
+    }
+    // get all the operators to work with numeric numbers
+
+    // addition with a regular number works on either side
+    {
+        const Value x{3.0};
+
+        Value right = x + 2.0;
+        assert(right.data() == 5.0);
+        right.backward();
+        assert(x.grad() == 1.0);
+
+        Value left = 2.0 + x;
+        assert(left.data() == 5.0);
+        left.backward();
+        assert(x.grad() == 1.0);
+    }
+
+    // subtraction
+    {
+        const Value x{3.0};
+
+        Value right = x - 2.0;
+        assert(right.data() == 1.0);
+        right.backward();
+        assert(x.grad() == 1.0);
+
+        Value left = 2.0 - x;
+        assert(left.data() == -1.0);
+        left.backward();
+        assert(x.grad() == -1.0);
+    }
+
+    // multiplication
+    {
+        const Value x{3.0};
+        Value result = 2.0 * x + x * 2.0;
+
+        assert(result.data() == 12.0);
+        result.backward();
+        assert(x.grad() == 4.0);
+    }
+
+    // division
+    {
+        const Value x{4.0};
+        Value result = x / 2.0 + 2.0 / x;
+
+        assert(result.data() == 2.5);
+        result.backward();
+        assert(x.grad() == 0.375);
     }
 }

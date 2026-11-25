@@ -5,6 +5,7 @@ import <vector>;
 import <utility>;
 import <unordered_set>;
 import <algorithm>;
+import <cmath>;
 
 
 struct Node { // abstract base class
@@ -81,6 +82,28 @@ struct DivNode final : Node {
     }
 };
 
+struct TanhNode final : Node {
+    explicit TanhNode(std::shared_ptr<Node> node) : 
+        Node{std::tanh(node->data), {node}} {}
+    void backward_step() override {
+        // the derivative of tanh is 1 - tanh^2(x)
+        // so using the chain rule:
+        inputs[0]->grad += grad * (1.0 - data * data);
+    }
+};
+
+struct ReLUNode final : Node {
+    explicit ReLUNode(std::shared_ptr<Node> node) :
+        Node(std::max(0.0, node->data), {node}) {}
+    void backward_step() override {
+        // when <= 0 this function is just y = 0 which has 0 slope
+        // so we don't add gradient to this. when > 0 y = x so slope of 1
+        if (data > 0.0) {
+            inputs[0]->grad += grad;
+        }
+    }
+};
+
 // append each node after its inputs. By construction, when we reverse this, it
 //   lets each node receive its full gradient before passing it on to inputs.
 void collect_nodes(
@@ -142,9 +165,8 @@ export namespace rahml {
         Value operator+(const Value &other) const {
             return Value{std::make_shared<AddNode>(node, other.node)};
         }
-        Value operator*(const Value &other) const {
-            // this will get copy elided away
-            return Value{std::make_shared<MultNode>(node, other.node)};
+        Value operator+(double number) const {
+            return *this + Value{number};
         }
         Value operator-() const {
             return Value{std::make_shared<NegNode>(node)};
@@ -153,9 +175,43 @@ export namespace rahml {
             // subtracting is the same as adding a negative number
             return *this + (-other); // redirection to using our + and -
         }
+        Value operator-(double number) const {
+            return *this - Value{number};
+        }
+        Value operator*(const Value &other) const {
+            // this will get copy elided away
+            return Value{std::make_shared<MultNode>(node, other.node)};
+        }
+        Value operator*(double number) const {
+            return *this * Value{number};
+        }
         Value operator/(const Value &other) const {
             return Value{std::make_shared<DivNode>(node, other.node)};
         }
+        Value operator/(double number) const {
+            return *this / Value{number};
+        }
+        Value tanh() const {
+            return Value{std::make_shared<TanhNode>(node)};
+        }
+        Value relu() const {
+            return Value{std::make_shared<ReLUNode>(node)};
+        }
     };
+    Value operator+(double number, const Value &value) {
+        return value + number; // swap order so it calls function in Value class
+    }
+    Value operator-(double number, const Value &value) {
+        // here the order does matter, we can't just redirect
+        return Value{number} - value;
+    }
 
+    Value operator*(double number, const Value &value) {
+        return value * number;
+    }
+
+    Value operator/(double number, const Value &value) {
+        return Value{number} / value;
+    }
 }
+
