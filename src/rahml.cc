@@ -6,6 +6,7 @@ import <utility>;
 import <unordered_set>;
 import <algorithm>;
 import <cmath>;
+import <stdexcept>;
 
 
 struct Node { // abstract base class
@@ -20,12 +21,19 @@ struct Node { // abstract base class
         data{data}, inputs{std::move(inputs)} {}
     virtual ~Node() = default;
     virtual void backward_step() = 0; // update inputs' gradients
+    virtual void set_data(double) {
+        throw std::logic_error{"set_data requires a leaf Value"};
+    }
 };
 
 struct LeafNode final : Node {
     explicit LeafNode(double data) : Node{data} {}
     void backward_step() override {} // do nothing b/c no inputs 
                                      // to send gradients too
+    // we would not want to throw error when setting this data
+    void set_data(double new_data) override {
+        data = new_data;
+    }
 };
 
 struct AddNode final : Node {
@@ -125,6 +133,12 @@ void collect_nodes(
 
 export namespace rahml {
 
+    template <typename Function>
+    double central_difference(const Function &f, double x) {
+        constexpr double h = 1e-5;
+        return (f(x + h) - f(x - h)) / (2.0 * h);
+    }
+
     class Value {
         std::shared_ptr<Node> node; // multiple could point, Ex:
         /*
@@ -142,6 +156,12 @@ export namespace rahml {
         }
         double grad() const {
             return node->grad;
+        }
+        void set_data(double new_data) {
+            node->set_data(new_data);
+        }
+        void zero_grad() {
+            node->grad = 0.0;
         }
         // backpropogation:
         void backward() {

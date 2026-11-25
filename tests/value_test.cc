@@ -322,4 +322,45 @@ int main() {
         result.backward();
         assert(x.grad() == 0.375);
     }
+    // make sure set_data method works right 
+    // and doesn't create a new node
+    {
+        Value x{2.0};
+        Value alias = x;
+        (x * x).backward();
+        assert(x.grad() == 4.0);
+        assert(alias.grad() == 4.0);
+        x.set_data(3.0);
+        assert(alias.data() == 3.0);
+        x.zero_grad();
+        assert(alias.grad() == 0.0);
+        assert(x.data() == 3.0);
+        (x * x).backward();
+        assert(x.grad() == 6.0);
+    }
+
+    // test to make sure the exception does get thrown
+    {
+        Value x{2.0};
+        Value square = x * x; // we shouldn't be able to modify this value
+        try {
+            square.set_data(10.0);
+            assert(false && "Updating operation result should throw");
+        } catch (const std::logic_error&) {
+            assert(square.data() == 4.0);
+        }
+    }
+
+    // testing the numeric derivative
+    {
+        auto f = [](auto x) { return x * x + x; };
+
+        Value x{2.0};
+        f(x).backward();
+
+        double estimate = rahml::central_difference(f, 2.0);
+        assert(std::abs(estimate - 5.0) < 1e-6);
+        // make sure it aligns with x.grad:
+        assert(std::abs(x.grad() - estimate) < 1e-6);
+    }
 }

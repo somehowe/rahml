@@ -8,13 +8,11 @@ using rahml::Value;
 int main() {
     // we are trying to get our model to predict y = 2x + 1
     const std::vector<double> xs{-2.0, -1.0, 0.0, 1.0, 2.0};
-    double weight = 0.0;
-    double bias = 0.0; 
+    Value w{0.0}; // weight
+    Value b{0.0}; // bias
     const double learning_rate = 0.1;
 
     for (int step = 0; step < 100; ++step) {
-        Value w{weight}; // weight
-        Value b{bias}; // bias
         Value total_loss{0.0};
         for (double x_num : xs) {
             Value x{x_num};
@@ -30,12 +28,12 @@ int main() {
             std::cout << "step = " << step << ", loss = " << loss.data() <<
             ", w = " << w.data() << ", b = " << b.data() << "\n";
         }
-        weight -= learning_rate * w.grad();
-        bias -= learning_rate * b.grad();
+        w.set_data(w.data() - learning_rate * w.grad());
+        b.set_data(b.data() - learning_rate * b.grad());
     }
-    std::cout << "learned w = " << weight << '\n';
-    std::cout << "learned b = " << bias << '\n';
+    std::cout << "learned w = " << w.data() << '\n';
+    std::cout << "learned b = " << b.data() << '\n';
 
-    assert(weight > 1.999 && weight < 2.001);
-    assert(bias > 0.999 && bias < 1.001);
+    assert(w.data() > 1.999 && w.data() < 2.001);
+    assert(b.data() > 0.999 && b.data() < 1.001);
 }
